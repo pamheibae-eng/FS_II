@@ -6,52 +6,83 @@ import ValidationMessage from "./ValidationMessage";
 
 import usePostValidation from "../hooks/usePostValidation";
 
+type Draft = {
+  id: number;
+  platform: string;
+  content: string;
+};
+
 function PostComposer() {
   const [platform, setPlatform] = useState("Twitter");
   const [content, setContent] = useState("");
+  const [drafts, setDrafts] = useState<Draft[]>([]);
 
-  const validation = usePostValidation(
+  const validation = usePostValidation(platform, content);
+
+  function saveDraft() {
+  if (validation.type === "error") return;
+
+  const newDraft = {
+    id: Date.now(),
     platform,
-    content
-  );
+    content,
+  };
+
+  setDrafts([...drafts, newDraft]);
+
+  setContent("");
+}
+
+  function deleteDraft(id: number) {
+    setDrafts(drafts.filter((draft) => draft.id !== id));
+  }
 
   return (
-    <div className="composer">
+    <div>
+      <h2>Create Post</h2>
 
       <PlatformSelector
         platform={platform}
-        onPlatformChange={setPlatform}
+        setPlatform={setPlatform}
       />
 
-      <div className="form-group">
-        <label>Write Your Post</label>
-
-        <textarea
-          rows={8}
-          placeholder="Write something..."
-          value={content}
-          onChange={(e) =>
-            setContent(e.target.value)
-          }
-        />
-      </div>
+      <textarea
+        rows={8}
+        placeholder="Write something..."
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
 
       <CharacterCounter
-        used={validation.charactersUsed}
-        limit={validation.limit}
+        content={content}
+        platform={platform}
       />
 
-      <ValidationMessage
-        type={validation.type}
-        message={validation.message}
-      />
+      <ValidationMessage validation={validation} />
+
+      
 
       <button
-        disabled={validation.type === "error"}
-      >
-        Publish Post
-      </button>
+  disabled={validation.type === "error"}
+  onClick={saveDraft}
+>
+  Save Draft
+</button>
 
+
+      <h3>Saved Drafts</h3>
+
+      {drafts.map((draft) => (
+        <div key={draft.id}>
+          <p>
+            <b>{draft.platform}</b>: {draft.content}
+          </p>
+
+          <button onClick={() => deleteDraft(draft.id)}>
+            Delete Draft
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

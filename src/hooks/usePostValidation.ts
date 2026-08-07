@@ -1,45 +1,30 @@
-import { useMemo } from "react";
+function usePostValidation(platform: string, content: string) {
+  const limits: Record<string, number> = {
+    Twitter: 280,
+    Instagram: 2200,
+    Facebook: 63206,
+  };
 
-const platformLimits: Record<string, number> = {
-  Twitter: 280,
-  Facebook: 5000,
-  Instagram: 2200,
-  LinkedIn: 3000,
-};
+  const maxLength = limits[platform];
 
-export function usePostValidation(
-  platform: string,
-  content: string
-) {
-  return useMemo(() => {
-    const limit = platformLimits[platform];
-    const charactersUsed = content.length;
-    const charactersRemaining = limit - charactersUsed;
-
-    let message = "";
-    let type: "success" | "warning" | "error" = "success";
-
-    if (charactersRemaining < 0) {
-      type = "error";
-      message = `Character limit exceeded by ${Math.abs(
-        charactersRemaining
-      )} characters.`;
-    } else if (charactersRemaining <= 20) {
-      type = "warning";
-      message = `${charactersRemaining} characters remaining.`;
-    } else {
-      type = "success";
-      message = `${charactersRemaining} characters remaining.`;
-    }
-
+  if (content.length === 0) {
     return {
-      limit,
-      charactersUsed,
-      charactersRemaining,
-      type,
-      message,
+      type: "error",
+      message: "Post cannot be empty",
     };
-  }, [platform, content]);
+  }
+
+  if (content.length > maxLength) {
+    return {
+      type: "error",
+      message: `${platform} allows only ${maxLength} characters`,
+    };
+  }
+
+  return {
+    type: "success",
+    message: `Good! ${content.length}/${maxLength} characters used`,
+  };
 }
 
 export default usePostValidation;
