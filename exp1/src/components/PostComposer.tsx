@@ -9,18 +9,24 @@ import usePostValidation from "../hooks/usePostValidation";
 function PostComposer() {
   const [platform, setPlatform] = useState("Twitter");
   const [content, setContent] = useState("");
+  const [draft, setDraft] = useState("");
 
-  const validation = usePostValidation(
-    platform,
-    content
-  );
+  const validation = usePostValidation(platform, content);
+
+  const saveDraft = () => {
+    setDraft(content);
+  };
+
+  const deleteDraft = () => {
+    setDraft("");
+    setContent("");
+  };
 
   return (
     <div className="composer">
-
       <PlatformSelector
         platform={platform}
-        onPlatformChange={setPlatform}
+        setPlatform={setPlatform}
       />
 
       <div className="form-group">
@@ -30,9 +36,7 @@ function PostComposer() {
           rows={8}
           placeholder="Write something..."
           value={content}
-          onChange={(e) =>
-            setContent(e.target.value)
-          }
+          onChange={(e) => setContent(e.target.value)}
         />
       </div>
 
@@ -46,12 +50,24 @@ function PostComposer() {
         message={validation.message}
       />
 
-      <button
-        disabled={validation.type === "error"}
-      >
-        Publish Post
-      </button>
+      <div>
+        <button
+          onClick={saveDraft}
+          disabled={validation.type === "error"}
+        >
+          Save Draft
+        </button>
 
+        <button onClick={deleteDraft}>
+          Delete Draft
+        </button>
+      </div>
+
+      {draft && (
+        <div className="success">
+          Draft saved: {draft}
+        </div>
+      )}
     </div>
   );
 }
