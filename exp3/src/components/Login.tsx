@@ -19,10 +19,10 @@ const users: DemoUser[] = [
     password: "1234",
     role: "admin",
     permissions: [
-      "view_users",
-      "manage_users",
-      "admin_resources",
-      "system_info",
+      "view_posts",
+      "create_posts",
+      "edit_posts",
+      "delete_posts",
     ],
   },
   {
@@ -30,16 +30,16 @@ const users: DemoUser[] = [
     password: "1234",
     role: "editor",
     permissions: [
-      "view_users",
-      "edit_content",
+      "view_posts",
+      "edit_posts",
     ],
   },
   {
-    username: "user",
+    username: "viewer",
     password: "1234",
-    role: "user",
+    role: "viewer",
     permissions: [
-      "view_profile",
+      "view_posts",
     ],
   },
 ];
@@ -145,7 +145,7 @@ function Login({ onLogin }: LoginProps) {
           </p>
 
           <p>
-            👤 User: <b>user</b> / <b>1234</b>
+            👀 Viewer: <b>viewer</b> / <b>1234</b>
           </p>
         </div>
       </div>

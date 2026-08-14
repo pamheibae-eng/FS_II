@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   getUserFromToken,
   hasPermission,
@@ -8,54 +9,58 @@ interface DashboardProps {
   onLogout: () => void;
 }
 
-interface Permission {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
+interface Post {
+  id: number;
+  title: string;
+  content: string;
 }
 
-const permissions: Permission[] = [
+const defaultPosts: Post[] = [
   {
-    id: "view_users",
-    name: "View Users",
-    icon: "👥",
-    description: "View registered users",
+    id: 1,
+    title: "Welcome to Full Stack Development",
+    content:
+      "This is an example post created for the role-based authorization experiment.",
   },
   {
-    id: "manage_users",
-    name: "Manage Users",
-    icon: "⚙️",
-    description: "Create, edit and manage users",
-  },
-  {
-    id: "admin_resources",
-    name: "Admin Resources",
-    icon: "👑",
-    description: "Access administrator resources",
-  },
-  {
-    id: "system_info",
-    name: "System Information",
-    icon: "🖥️",
-    description: "View system information",
-  },
-  {
-    id: "edit_content",
-    name: "Edit Content",
-    icon: "✏️",
-    description: "Create and edit application content",
-  },
-  {
-    id: "view_profile",
-    name: "View Profile",
-    icon: "👤",
-    description: "View your personal profile",
+    id: 2,
+    title: "JWT Authentication",
+    content:
+      "JWT is used to store user identity, role and permissions.",
   },
 ];
 
 function Dashboard({ onLogout }: DashboardProps) {
   const user = getUserFromToken();
+
+  const [posts, setPosts] = useState<Post[]>(() => {
+    const savedPosts = localStorage.getItem("posts");
+
+    if (savedPosts) {
+      return JSON.parse(savedPosts);
+    }
+
+    localStorage.setItem(
+      "posts",
+      JSON.stringify(defaultPosts)
+    );
+
+    return defaultPosts;
+  });
+
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  const [editingId, setEditingId] = useState<number | null>(
+    null
+  );
+
+  const [showCreateForm, setShowCreateForm] =
+    useState(false);
+
+  // Post currently being viewed
+  const [viewingPost, setViewingPost] =
+    useState<Post | null>(null);
 
   if (!user) {
     return (
@@ -73,18 +78,137 @@ function Dashboard({ onLogout }: DashboardProps) {
     onLogout();
   };
 
-  const handlePermission = (
-    permission: Permission
-  ) => {
-    if (hasPermission(permission.id)) {
+  const updatePosts = (updatedPosts: Post[]) => {
+    setPosts(updatedPosts);
+
+    localStorage.setItem(
+      "posts",
+      JSON.stringify(updatedPosts)
+    );
+  };
+
+  // CREATE
+  const handleCreatePost = () => {
+    if (!hasPermission("create_posts")) {
       alert(
-        `✅ Authorized!\n\n${user.username} has permission to: ${permission.name}`
+        "❌ Access Denied!\n\nOnly Admin can create posts."
       );
-    } else {
-      alert(
-        `❌ Access Denied!\n\n${user.username} does not have permission to: ${permission.name}`
-      );
+      return;
     }
+
+    if (!title.trim() || !content.trim()) {
+      alert("Please enter both title and content.");
+      return;
+    }
+
+    const newPost: Post = {
+      id: Date.now(),
+      title: title.trim(),
+      content: content.trim(),
+    };
+
+    updatePosts([...posts, newPost]);
+
+    setTitle("");
+    setContent("");
+    setShowCreateForm(false);
+
+    alert("✅ Post created successfully!");
+  };
+
+  // EDIT
+  const handleEditPost = (post: Post) => {
+    if (!hasPermission("edit_posts")) {
+      alert(
+        `❌ Access Denied!\n\n${user.username} does not have permission to edit posts.`
+      );
+      return;
+    }
+
+    setEditingId(post.id);
+    setTitle(post.title);
+    setContent(post.content);
+
+    setShowCreateForm(false);
+    setViewingPost(null);
+  };
+
+  // UPDATE
+  const handleUpdatePost = () => {
+    if (!hasPermission("edit_posts")) {
+      alert("❌ Access Denied!");
+      return;
+    }
+
+    if (!title.trim() || !content.trim()) {
+      alert("Please enter both title and content.");
+      return;
+    }
+
+    const updatedPosts = posts.map((post) =>
+      post.id === editingId
+        ? {
+            ...post,
+            title: title.trim(),
+            content: content.trim(),
+          }
+        : post
+    );
+
+    updatePosts(updatedPosts);
+
+    setEditingId(null);
+    setTitle("");
+    setContent("");
+
+    alert("✅ Post updated successfully!");
+  };
+
+  // DELETE
+  const handleDeletePost = (id: number) => {
+    if (!hasPermission("delete_posts")) {
+      alert(
+        `❌ Access Denied!\n\n${user.username} does not have permission to delete posts.`
+      );
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this post?"
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    const updatedPosts = posts.filter(
+      (post) => post.id !== id
+    );
+
+    updatePosts(updatedPosts);
+
+    // If the deleted post was open, close it
+    if (viewingPost?.id === id) {
+      setViewingPost(null);
+    }
+
+    alert("✅ Post deleted successfully!");
+  };
+
+  // VIEW FULL POST
+  const handleViewPost = (post: Post) => {
+    if (!hasPermission("view_posts")) {
+      alert(
+        `❌ Access Denied!\n\n${user.username} does not have permission to view posts.`
+      );
+      return;
+    }
+
+    setViewingPost(post);
+
+    // Close other forms
+    setEditingId(null);
+    setShowCreateForm(false);
   };
 
   return (
@@ -103,6 +227,9 @@ function Dashboard({ onLogout }: DashboardProps) {
       </nav>
 
       <main className="dashboard-container">
+
+        {/* Welcome Card */}
+
         <div className="welcome-card">
           <div>
             <p className="small-text">
@@ -118,7 +245,7 @@ function Dashboard({ onLogout }: DashboardProps) {
             >
               {user.role === "admin" && "👑 ADMIN"}
               {user.role === "editor" && "✏️ EDITOR"}
-              {user.role === "user" && "👤 USER"}
+              {user.role === "viewer" && "👀 VIEWER"}
             </span>
           </div>
 
@@ -127,7 +254,10 @@ function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
+        {/* Information Cards */}
+
         <div className="cards">
+
           <div className="info-card">
             <div className="card-icon">
               🔑
@@ -153,8 +283,8 @@ function Dashboard({ onLogout }: DashboardProps) {
             <h3>Authorization</h3>
 
             <p>
-              Your role controls which resources
-              and actions you can access.
+              Your role controls which post
+              actions you can perform.
             </p>
 
             <span className="status success">
@@ -178,71 +308,205 @@ function Dashboard({ onLogout }: DashboardProps) {
               ✓ Token Active
             </span>
           </div>
+
         </div>
 
+        {/* Posts Section */}
+
         <div className="permissions-section">
+
           <div className="section-heading">
             <div>
-              <h2>🛡️ Available Permissions</h2>
+              <h2>📝 Posts</h2>
 
               <p>
-                Click an action to test authorization.
+                Manage posts according to your role.
               </p>
             </div>
 
             <span className="permission-count">
-              {user.permissions.length} permissions
+              {posts.length} posts
             </span>
           </div>
 
-          <div className="permission-list">
-            {permissions.map((permission) => {
-              const allowed = hasPermission(
-                permission.id
-              );
+          {/* Create Post - ADMIN ONLY */}
 
-              return (
-                <button
-                  key={permission.id}
-                  className={`permission-button ${
-                    allowed
-                      ? "allowed"
-                      : "denied"
-                  }`}
-                  onClick={() =>
-                    handlePermission(permission)
+          {hasPermission("create_posts") && (
+            <button
+              className="login-button"
+              onClick={() => {
+                setShowCreateForm(!showCreateForm);
+                setEditingId(null);
+                setViewingPost(null);
+                setTitle("");
+                setContent("");
+              }}
+            >
+              ➕ Create Post
+            </button>
+          )}
+
+          {/* Create / Edit Form */}
+
+          {(showCreateForm || editingId !== null) && (
+            <div className="info-card">
+
+              <h3>
+                {editingId !== null
+                  ? "✏️ Edit Post"
+                  : "➕ Create New Post"}
+              </h3>
+
+              <div className="form-group">
+                <label>Title</label>
+
+                <input
+                  type="text"
+                  placeholder="Enter post title"
+                  value={title}
+                  onChange={(e) =>
+                    setTitle(e.target.value)
                   }
-                >
-                  <span className="permission-icon">
-                    {permission.icon}
-                  </span>
+                />
+              </div>
 
-                  <span className="permission-text">
-                    <strong>
-                      {permission.name}
-                    </strong>
+              <div className="form-group">
+                <label>Content</label>
 
-                    <small>
-                      {permission.description}
-                    </small>
-                  </span>
+                <textarea
+                  placeholder="Enter post content"
+                  value={content}
+                  onChange={(e) =>
+                    setContent(e.target.value)
+                  }
+                  rows={5}
+                />
+              </div>
 
-                  <span
-                    className={`permission-status ${
-                      allowed
-                        ? "allowed-status"
-                        : "denied-status"
-                    }`}
+              <button
+                className="login-button"
+                onClick={
+                  editingId !== null
+                    ? handleUpdatePost
+                    : handleCreatePost
+                }
+              >
+                {editingId !== null
+                  ? "Update Post"
+                  : "Save Post"}
+              </button>
+
+            </div>
+          )}
+
+          {/* FULL POST VIEW */}
+
+          {viewingPost && (
+            <div className="info-card">
+
+              <h3>
+                📖 {viewingPost.title}
+              </h3>
+
+              <p>
+                {viewingPost.content}
+              </p>
+
+              <button
+                className="login-button"
+                onClick={() =>
+                  setViewingPost(null)
+                }
+              >
+                ← Back to Posts
+              </button>
+
+            </div>
+          )}
+
+          {/* Posts List */}
+
+          {!viewingPost && (
+            <div className="permission-list">
+
+              {posts.length === 0 ? (
+                <p>
+                  No posts available.
+                </p>
+              ) : (
+                posts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="permission-button allowed"
                   >
-                    {allowed
-                      ? "✓ Allowed"
-                      : "✕ Denied"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+
+                    <span className="permission-icon">
+                      📝
+                    </span>
+
+                    <span className="permission-text">
+                      <strong>
+                        {post.title}
+                      </strong>
+
+                      <small>
+                        {post.content.length > 80
+                          ? `${post.content.substring(
+                              0,
+                              80
+                            )}...`
+                          : post.content}
+                      </small>
+                    </span>
+
+                    <span>
+
+                      {/* VIEW - ALL ROLES */}
+
+                      <button
+                        onClick={() =>
+                          handleViewPost(post)
+                        }
+                      >
+                        👁️
+                      </button>
+
+                      {/* EDIT - ADMIN + EDITOR */}
+
+                      {hasPermission("edit_posts") && (
+                        <button
+                          onClick={() =>
+                            handleEditPost(post)
+                          }
+                        >
+                          ✏️
+                        </button>
+                      )}
+
+                      {/* DELETE - ADMIN ONLY */}
+
+                      {hasPermission("delete_posts") && (
+                        <button
+                          onClick={() =>
+                            handleDeletePost(post.id)
+                          }
+                        >
+                          🗑️
+                        </button>
+                      )}
+
+                    </span>
+
+                  </div>
+                ))
+              )}
+
+            </div>
+          )}
+
         </div>
+
+        {/* Security Note */}
 
         <div className="security-note">
           <strong>
@@ -250,11 +514,12 @@ function Dashboard({ onLogout }: DashboardProps) {
           </strong>
 
           <p>
-            Your permissions are determined by
-            your assigned role. Different users
-            receive different levels of access.
+            Admin can create, edit and delete
+            posts. Editor can edit posts, while
+            Viewer can only view posts.
           </p>
         </div>
+
       </main>
     </div>
   );
