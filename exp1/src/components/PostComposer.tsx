@@ -26,7 +26,7 @@ function PostComposer() {
     <div className="composer">
       <PlatformSelector
         platform={platform}
-        setPlatform={setPlatform}
+        onPlatformChange={setPlatform}
       />
 
       <div className="form-group">
