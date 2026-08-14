@@ -1,8 +1,58 @@
-import { getUserFromToken, removeToken } from "../utils/auth";
+import {
+  getUserFromToken,
+  hasPermission,
+  removeToken,
+} from "../utils/auth";
 
 interface DashboardProps {
   onLogout: () => void;
 }
+
+interface Permission {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+}
+
+const permissions: Permission[] = [
+  {
+    id: "view_users",
+    name: "View Users",
+    icon: "👥",
+    description: "View registered users",
+  },
+  {
+    id: "manage_users",
+    name: "Manage Users",
+    icon: "⚙️",
+    description: "Create, edit and manage users",
+  },
+  {
+    id: "admin_resources",
+    name: "Admin Resources",
+    icon: "👑",
+    description: "Access administrator resources",
+  },
+  {
+    id: "system_info",
+    name: "System Information",
+    icon: "🖥️",
+    description: "View system information",
+  },
+  {
+    id: "edit_content",
+    name: "Edit Content",
+    icon: "✏️",
+    description: "Create and edit application content",
+  },
+  {
+    id: "view_profile",
+    name: "View Profile",
+    icon: "👤",
+    description: "View your personal profile",
+  },
+];
 
 function Dashboard({ onLogout }: DashboardProps) {
   const user = getUserFromToken();
@@ -23,7 +73,19 @@ function Dashboard({ onLogout }: DashboardProps) {
     onLogout();
   };
 
-  const isAdmin = user.role === "admin";
+  const handlePermission = (
+    permission: Permission
+  ) => {
+    if (hasPermission(permission.id)) {
+      alert(
+        `✅ Authorized!\n\n${user.username} has permission to: ${permission.name}`
+      );
+    } else {
+      alert(
+        `❌ Access Denied!\n\n${user.username} does not have permission to: ${permission.name}`
+      );
+    }
+  };
 
   return (
     <div className="dashboard-page">
@@ -32,7 +94,10 @@ function Dashboard({ onLogout }: DashboardProps) {
           🔐 AuthSystem
         </div>
 
-        <button className="logout-button" onClick={handleLogout}>
+        <button
+          className="logout-button"
+          onClick={handleLogout}
+        >
           Logout
         </button>
       </nav>
@@ -40,18 +105,20 @@ function Dashboard({ onLogout }: DashboardProps) {
       <main className="dashboard-container">
         <div className="welcome-card">
           <div>
-            <p className="small-text">Welcome back</p>
+            <p className="small-text">
+              Welcome back
+            </p>
 
             <h1>
               Hello, {user.username}! 👋
             </h1>
 
             <span
-              className={
-                isAdmin ? "role-badge admin" : "role-badge user"
-              }
+              className={`role-badge ${user.role}`}
             >
-              {isAdmin ? "👑 ADMIN" : "👤 USER"}
+              {user.role === "admin" && "👑 ADMIN"}
+              {user.role === "editor" && "✏️ EDITOR"}
+              {user.role === "user" && "👤 USER"}
             </span>
           </div>
 
@@ -62,13 +129,15 @@ function Dashboard({ onLogout }: DashboardProps) {
 
         <div className="cards">
           <div className="info-card">
-            <div className="card-icon">🔑</div>
+            <div className="card-icon">
+              🔑
+            </div>
 
             <h3>Authentication</h3>
 
             <p>
-              Your identity has been verified successfully using JWT
-              authentication.
+              Your identity has been verified
+              using JWT authentication.
             </p>
 
             <span className="status success">
@@ -77,28 +146,32 @@ function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           <div className="info-card">
-            <div className="card-icon">🛡️</div>
+            <div className="card-icon">
+              🛡️
+            </div>
 
             <h3>Authorization</h3>
 
             <p>
-              Your role determines which resources you are allowed
-              to access.
+              Your role controls which resources
+              and actions you can access.
             </p>
 
             <span className="status success">
-              ✓ Authorized
+              ✓ Authorization Active
             </span>
           </div>
 
           <div className="info-card">
-            <div className="card-icon">🎫</div>
+            <div className="card-icon">
+              🎫
+            </div>
 
             <h3>JWT Token</h3>
 
             <p>
-              A JWT token is stored in localStorage and used to
-              identify the logged-in user.
+              Your JWT contains your username,
+              role and permissions.
             </p>
 
             <span className="status success">
@@ -107,44 +180,79 @@ function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {isAdmin ? (
-          <div className="admin-panel">
-            <h2>👑 Admin Panel</h2>
+        <div className="permissions-section">
+          <div className="section-heading">
+            <div>
+              <h2>🛡️ Available Permissions</h2>
 
-            <p>
-              You have administrator privileges.
-            </p>
-
-            <div className="permission-list">
-              <div>✓ View users</div>
-              <div>✓ Manage users</div>
-              <div>✓ Access admin resources</div>
-              <div>✓ View system information</div>
+              <p>
+                Click an action to test authorization.
+              </p>
             </div>
-          </div>
-        ) : (
-          <div className="user-panel">
-            <h2>👤 User Dashboard</h2>
 
-            <p>
-              You are logged in as a normal user.
-            </p>
-
-            <div className="permission-list">
-              <div>✓ View your profile</div>
-              <div>✓ Access user resources</div>
-              <div>✓ Update your information</div>
-              <div>✕ Admin resources</div>
-            </div>
+            <span className="permission-count">
+              {user.permissions.length} permissions
+            </span>
           </div>
-        )}
+
+          <div className="permission-list">
+            {permissions.map((permission) => {
+              const allowed = hasPermission(
+                permission.id
+              );
+
+              return (
+                <button
+                  key={permission.id}
+                  className={`permission-button ${
+                    allowed
+                      ? "allowed"
+                      : "denied"
+                  }`}
+                  onClick={() =>
+                    handlePermission(permission)
+                  }
+                >
+                  <span className="permission-icon">
+                    {permission.icon}
+                  </span>
+
+                  <span className="permission-text">
+                    <strong>
+                      {permission.name}
+                    </strong>
+
+                    <small>
+                      {permission.description}
+                    </small>
+                  </span>
+
+                  <span
+                    className={`permission-status ${
+                      allowed
+                        ? "allowed-status"
+                        : "denied-status"
+                    }`}
+                  >
+                    {allowed
+                      ? "✓ Allowed"
+                      : "✕ Denied"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="security-note">
-          <strong>🔒 Security Demo</strong>
+          <strong>
+            🔒 Role-Based Authorization
+          </strong>
 
           <p>
-            This experiment demonstrates JWT-based authentication
-            and role-based authorization in a React application.
+            Your permissions are determined by
+            your assigned role. Different users
+            receive different levels of access.
           </p>
         </div>
       </main>

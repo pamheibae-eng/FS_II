@@ -1,11 +1,9 @@
+export type Role = "admin" | "editor" | "user";
+
 export interface User {
   username: string;
-  role: "user" | "admin";
-}
-
-export interface AuthData {
-  username: string;
-  role: "user" | "admin";
+  role: Role;
+  permissions: string[];
 }
 
 export const saveToken = (token: string) => {
@@ -20,7 +18,6 @@ export const removeToken = () => {
   localStorage.removeItem("token");
 };
 
-// Decode the demo JWT payload
 export const getUserFromToken = (): User | null => {
   const token = getToken();
 
@@ -40,8 +37,19 @@ export const getUserFromToken = (): User | null => {
     return {
       username: payload.username,
       role: payload.role,
+      permissions: payload.permissions,
     };
   } catch {
     return null;
   }
+};
+
+export const hasPermission = (permission: string): boolean => {
+  const user = getUserFromToken();
+
+  if (!user) {
+    return false;
+  }
+
+  return user.permissions.includes(permission);
 };

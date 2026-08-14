@@ -1,9 +1,48 @@
 import { useState } from "react";
 import { saveToken } from "../utils/auth";
+import type { Role } from "../utils/auth";
 
 interface LoginProps {
   onLogin: () => void;
 }
+
+interface DemoUser {
+  username: string;
+  password: string;
+  role: Role;
+  permissions: string[];
+}
+
+const users: DemoUser[] = [
+  {
+    username: "admin",
+    password: "1234",
+    role: "admin",
+    permissions: [
+      "view_users",
+      "manage_users",
+      "admin_resources",
+      "system_info",
+    ],
+  },
+  {
+    username: "editor",
+    password: "1234",
+    role: "editor",
+    permissions: [
+      "view_users",
+      "edit_content",
+    ],
+  },
+  {
+    username: "user",
+    password: "1234",
+    role: "user",
+    permissions: [
+      "view_profile",
+    ],
+  },
+];
 
 function Login({ onLogin }: LoginProps) {
   const [username, setUsername] = useState("");
@@ -13,21 +52,17 @@ function Login({ onLogin }: LoginProps) {
   const handleLogin = () => {
     setError("");
 
-    let role: "user" | "admin" | null = null;
+    const foundUser = users.find(
+      (user) =>
+        user.username === username &&
+        user.password === password
+    );
 
-    // Demo accounts
-    if (username === "admin" && password === "1234") {
-      role = "admin";
-    } else if (username === "user" && password === "1234") {
-      role = "user";
-    }
-
-    if (!role) {
+    if (!foundUser) {
       setError("Invalid username or password.");
       return;
     }
 
-    // Demo JWT
     const header = btoa(
       JSON.stringify({
         alg: "HS256",
@@ -37,8 +72,9 @@ function Login({ onLogin }: LoginProps) {
 
     const payload = btoa(
       JSON.stringify({
-        username,
-        role,
+        username: foundUser.username,
+        role: foundUser.role,
+        permissions: foundUser.permissions,
       })
     );
 
@@ -84,9 +120,16 @@ function Login({ onLogin }: LoginProps) {
           />
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
 
-        <button className="login-button" onClick={handleLogin}>
+        <button
+          className="login-button"
+          onClick={handleLogin}
+        >
           Login
         </button>
 
@@ -95,6 +138,10 @@ function Login({ onLogin }: LoginProps) {
 
           <p>
             👑 Admin: <b>admin</b> / <b>1234</b>
+          </p>
+
+          <p>
+            ✏️ Editor: <b>editor</b> / <b>1234</b>
           </p>
 
           <p>

@@ -349,3 +349,135 @@ input {
     font-size: 26px;
   }
 }
+
+.permissions-section {
+  margin-top: 25px;
+  padding: 28px;
+  border-radius: 18px;
+  background: #1e293b;
+  border: 1px solid #334155;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.section-heading h2 {
+  margin: 0 0 6px;
+}
+
+.section-heading p {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.permission-count {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.permission-list {
+  display: grid;
+  gap: 12px;
+}
+
+.permission-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #0f172a;
+  color: #e2e8f0;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.permission-button.allowed {
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.permission-button.denied {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  opacity: 0.7;
+}
+
+.permission-button.allowed:hover {
+  background: #172554;
+  border-color: #6366f1;
+  transform: translateX(4px);
+}
+
+.permission-button.denied:hover {
+  background: #3f1d2e;
+  border-color: #ef4444;
+  transform: translateX(4px);
+}
+
+.permission-icon {
+  font-size: 25px;
+  width: 35px;
+  text-align: center;
+}
+
+.permission-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.permission-text strong {
+  font-size: 16px;
+}
+
+.permission-text small {
+  color: #94a3b8;
+}
+
+.permission-status {
+  font-size: 13px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.allowed-status {
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.denied-status {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.role-badge.editor {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+
+@media (max-width: 700px) {
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .permission-button {
+    flex-wrap: wrap;
+  }
+
+  .permission-status {
+    margin-left: 50px;
+  }
+}
