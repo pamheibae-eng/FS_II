@@ -17,7 +17,7 @@ You will need to run the Backend and the Frontend separately. Open two different
 1. Open a terminal.
 2. Navigate into the `backend` folder:
    ```bash
-   cd exp_6_code/backend
+   cd backend
    ```
 3. Run the Spring Boot application using Maven:
    ```bash
@@ -30,7 +30,7 @@ You will need to run the Backend and the Frontend separately. Open two different
 1. Open a *new* terminal window.
 2. Navigate into the `frontend` folder:
    ```bash
-   cd exp_6_code/frontend
+   cd frontend
    ```
 3. Install the required Node dependencies (you only need to do this once):
    ```bash
@@ -41,6 +41,8 @@ You will need to run the Backend and the Frontend separately. Open two different
    npm run dev
    ```
 5. Open your browser and go to the URL shown in the terminal (usually **http://localhost:5173**).
+
+The frontend sends API requests through Vite's `/api` proxy, which forwards them to **http://localhost:8080** by default. If the backend runs on another host or port, set `VITE_BACKEND_URL` in `frontend/.env` to its base URL (for example, `http://192.168.1.20:8080`) and restart Vite. For a separately hosted production frontend, set `VITE_API_URL` to the backend API URL ending in `/api/tasks` before building.
 
 ---
 

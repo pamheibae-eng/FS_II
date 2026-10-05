@@ -441,6 +441,33 @@ body {
   font-size: 1.05rem;
 }
 
+.connection-error {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: -15px 0 24px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 85, 85, 0.08);
+  color: #ffb3b3;
+}
+
+.retry-button {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 179, 179, 0.4);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background: rgba(255, 85, 85, 0.15);
+}
+
 .empty-icon {
   font-size: 3rem;
   margin-bottom: 15px;

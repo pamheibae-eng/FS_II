@@ -5,14 +5,15 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState('');
   
   // Pagination State
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 5;
 
-  // Backend API URL
-  const API_URL = 'http://localhost:8080/api/tasks';
+  // Use the same-origin Vite proxy by default; set VITE_API_URL for a separately hosted API.
+  const API_URL = import.meta.env.VITE_API_URL || '/api/tasks';
 
   useEffect(() => {
     fetchTasks();
@@ -27,9 +28,11 @@ function App() {
       const data = await response.json();
       setTasks(data.content);
       setTotalPages(data.totalPages);
-      setLoading(false);
+      setConnectionError('');
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      setConnectionError('Could not connect to the backend. Make sure it is running and try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -44,11 +47,13 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTaskTitle, completed: false })
       });
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
       await response.json();
       setNewTaskTitle(''); 
       fetchTasks();
     } catch (error) {
       console.error('Error adding task:', error);
+      setConnectionError('Could not add the task. Check the backend connection and try again.');
     }
   };
 
@@ -57,21 +62,25 @@ function App() {
       const response = await fetch(`${API_URL}/${id}/toggle`, {
         method: 'PUT'
       });
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
       const updatedTask = await response.json();
       setTasks(tasks.map(task => (task.id === id ? updatedTask : task)));
     } catch (error) {
       console.error('Error toggling task:', error);
+      setConnectionError('Could not update the task. Check the backend connection and try again.');
     }
   };
 
   const handleDeleteTask = async (id) => {
     try {
-      await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE'
       });
+      if (!response.ok) throw new Error(`Request failed (${response.status})`);
       fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
+      setConnectionError('Could not delete the task. Check the backend connection and try again.');
     }
   };
 
@@ -125,6 +134,15 @@ function App() {
             <div className="btn-glow"></div>
           </button>
         </form>
+
+        {connectionError && (
+          <div className="connection-error" role="alert">
+            <span>{connectionError}</span>
+            <button type="button" className="retry-button" onClick={fetchTasks}>
+              Retry
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="loading-container">
